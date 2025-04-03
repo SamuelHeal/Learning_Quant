@@ -2,7 +2,28 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #334155;
+  --accent: #475569;
+  --accent-rgb: 71, 85, 105;
+  --accent-light: #64748b;
+  --accent-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: var(--foreground);
+  --shadow: 5px 5px 0px 0px rgba(51, 65, 85, 1);
+}
+
+html[data-theme="dark"] {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --accent: #64748b;
+  --accent-rgb: 100, 116, 139;
+  --accent-light: #94a3b8;
+  --accent-foreground: #0f172a;
+  --muted: #1e293b;
+  --muted-foreground: #cbd5e1;
+  --border: var(--foreground);
+  --shadow: 5px 5px 0px 0px rgba(203, 213, 225, 1);
 }
 
 @theme inline {
@@ -12,15 +33,161 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Neo-brutalist theme elements */
+.brutalist-border {
+  border: 3px solid var(--border);
+}
+
+.brutalist-box {
+  border: 3px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.brutalist-button {
+  border: 3px solid var(--border);
+  background-color: var(--background);
+  color: var(--foreground);
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.brutalist-button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow);
+}
+
+.brutalist-button:active {
+  transform: translate(0px, 0px);
+  box-shadow: none;
+}
+
+.theme-toggle {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: var(--accent);
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.theme-toggle::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--background);
+  transition: transform 0.3s;
+}
+
+.theme-toggle[data-theme="dark"]::after {
+  transform: translateX(24px);
+}
+
+/* Editor page styling */
+.editor-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.editor-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 3px solid var(--border);
+}
+
+.editor-sidebar {
+  background-color: var(--muted);
+  border-radius: 0;
+}
+
+.editor-content {
+  background-color: var(--background);
+}
+
+.content-block {
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.content-block:hover {
+  transform: translateY(-2px);
+}
+
+.block-controls {
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.content-block:hover .block-controls {
+  opacity: 1;
+}
+
+.editor-field {
+  margin-bottom: 1rem;
+}
+
+.editor-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.editor-field input,
+.editor-field textarea,
+.editor-field select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 3px solid var(--border);
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  gap: 1rem;
+}
+
+/* Global cursor styles for clickable elements */
+button,
+a,
+.brutalist-button,
+[role="button"],
+[onClick],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+select,
+.theme-toggle,
+[data-note-id],
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+/* Code-specific elements might want to maintain text selection cursor */
+code,
+pre {
+  cursor: text;
 }
