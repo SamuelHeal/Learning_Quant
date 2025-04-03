@@ -26,7 +26,7 @@ export default async function Home() {
               </h1>
               <h2 className="text-2xl mb-8">By Samuel Heal</h2>
               <p className="text-xl mb-8">
-                Exploring Mathematics, AI/ML, and Quantitative Finance through
+                Exploring Maths, AI/ML, and Quantitative Finance through
                 educational blogs and interactive code examples. This is meant
                 to be a learning journal for myself just as much as it is for
                 anyone else who visits. Please feel free to leave comments,
