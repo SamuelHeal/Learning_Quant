@@ -106,7 +106,13 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleSidebar = () => {
-    setSidebarOpen((prev) => !prev);
+    const newState = !sidebarOpen;
+    setSidebarOpen(newState);
+
+    // Reset highlight state ONLY when closing the sidebar (and we were adding a note)
+    if (!newState && isAddingNote) {
+      handleCancelNote();
+    }
   };
 
   // Function to open sidebar and focus on a specific note
@@ -133,6 +139,13 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     setIsAddingNote(false);
     setSelectedText("");
     setSelectedRange(null);
+    setActiveNoteId(null);
+
+    // Trigger a reset highlight event
+    if (typeof document !== "undefined") {
+      const event = new CustomEvent("resetHighlight");
+      document.dispatchEvent(event);
+    }
   };
 
   return (

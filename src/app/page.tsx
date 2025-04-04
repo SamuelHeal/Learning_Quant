@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getBlogPosts } from "@/lib/supabase";
+import { getSubjects, getBlogPosts } from "@/lib/supabase";
 import { BlogPost } from "@/types";
+import SimulationWrapper from "@/components/ui/SimulationWrapper";
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -12,11 +13,22 @@ async function getRecentPosts() {
 
 export default async function Home() {
   const recentPosts = await getRecentPosts();
+  // Get subject for each post
+  const allSubjects = await getSubjects();
+
+  // Enrich posts with their subject information
+  const enrichedPosts = recentPosts.map((post) => {
+    const subject = allSubjects.find((s) => s.id === post.subject_id);
+    return {
+      ...post,
+      subjectSlug: subject?.slug || "",
+    };
+  });
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="py-20 md:py-32">
+      <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="md:w-1/2">
@@ -26,30 +38,36 @@ export default async function Home() {
               </h1>
               <h2 className="text-2xl mb-8">By Samuel Heal</h2>
               <p className="text-xl mb-8">
-                Exploring Maths, AI/ML, and Quantitative Finance through
-                educational blogs and interactive code examples. This is meant
-                to be a learning journal for myself just as much as it is for
-                anyone else who visits. Please feel free to leave comments,
-                notes, or corrections if you find any mistakes.
+                In this educational blog, I explore the interconnected domains
+                of Mathematics, AI/ML, and Quantitative Finance through
+                structured blogs and interactive code examples. This serves as
+                both a learning journal for myself and a resource for visitors
+                seeking to understand these complex fields. I highly encourage
+                you to leave comments and notes for yourself, and send me
+                corrections to me so that I can improve the accuracy of the
+                content and learn more myself.
+              </p>
+              <p className="text-xl mb-8">
+                To add notes, simply highlight some text and click the "Add
+                Note" button. You can then elect to forward the note to me, and
+                I will seek to get back to you asap.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link href="/finance" className="brutalist-button">
+                <Link href="/finance/subjects" className="brutalist-button">
                   Finance
                 </Link>
-                <Link href="/ai-ml" className="brutalist-button">
+                <Link href="/ai-ml/subjects" className="brutalist-button">
                   AI/ML
                 </Link>
-                <Link href="/mathematics" className="brutalist-button">
+                <Link href="/mathematics/subjects" className="brutalist-button">
                   Mathematics
                 </Link>
               </div>
             </div>
             <div className="md:w-1/2 brutalist-box p-6">
               <div className="aspect-square relative">
-                {/* You can replace this with an actual image */}
-                <div className="w-full h-full bg-accent flex items-center justify-center text-secondary text-2xl font-bold">
-                  LBQ
-                </div>
+                {/* Algorithmic Trading Simulation */}
+                <SimulationWrapper />
               </div>
             </div>
           </div>
@@ -64,10 +82,10 @@ export default async function Home() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {recentPosts.length > 0 ? (
-              recentPosts.map((post: any) => (
+            {enrichedPosts.length > 0 ? (
+              enrichedPosts.map((post: any) => (
                 <Link
-                  href={`/${post.category}/${post.slug}`}
+                  href={`/${post.category}/subjects/${post.subjectSlug}/lessons/${post.slug}`}
                   key={post.id}
                   className="brutalist-box bg-secondary text-primary p-6 transition-transform hover:-translate-y-2"
                 >
@@ -90,10 +108,10 @@ export default async function Home() {
 
           <div className="mt-12 text-center">
             <Link
-              href="/finance"
+              href="/finance/subjects"
               className="brutalist-button bg-secondary text-primary"
             >
-              View All Posts
+              View All Subjects
             </Link>
           </div>
         </div>

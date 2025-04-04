@@ -12,7 +12,7 @@ const navLinks = [
   { path: "/finance", label: "Finance" },
   { path: "/ai-ml", label: "AI/ML" },
   { path: "/mathematics", label: "Mathematics" },
-  { path: "/research", label: "Research" },
+  // { path: "/research", label: "Research" },
 ];
 
 export default function Navbar() {
@@ -81,7 +81,7 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 right-0 bg-background brutalist-border mt-2 py-4"
+                      className="absolute top-full left-0 right-0 bg-background brutalist-border py-4"
                     >
                       <ul className="flex flex-col items-center gap-4">
                         {navLinks.map((link) => (

@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getBlogPostBySlug, getBlogPosts } from "@/lib/supabase";
+import { getBlogPostBySlug, getBlogPosts, getSubjects } from "@/lib/supabase";
 import { BlogCategory } from "@/types";
 import BlogSidebar from "@/components/blog/BlogSidebar";
 import BlogPost from "@/components/blog/BlogPost";
@@ -45,22 +45,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     return redirect(`/${post.category}/${post.slug}`);
   }
 
-  // Get all posts in this category for the sidebar
-  const categoryPosts = await getBlogPosts(category);
+  // Get all subjects to find the slug for this post's subject
+  const subjects = await getSubjects();
+  const subject = subjects.find((s) => s.id === post.subject_id);
 
-  return (
-    <div className="flex flex-col md:flex-row">
-      <BlogSidebar
-        posts={categoryPosts}
-        category={category}
-        currentSlug={slug}
-      />
+  if (!subject) {
+    return notFound();
+  }
 
-      <div className="flex-1 px-4 md:px-8 md:h-[90vh] md:overflow-y-auto">
-        <div className="p-6">
-          <BlogPost post={post} />
-        </div>
-      </div>
-    </div>
-  );
+  // Redirect to the new URL structure using subject slug
+  return redirect(`/${category}/subjects/${subject.slug}/lessons/${post.slug}`);
 }

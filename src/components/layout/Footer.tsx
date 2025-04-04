@@ -14,15 +14,15 @@ export default function Footer() {
 
           <div className="flex items-center gap-6">
             <a
-              href="mailto:contact@letsquant.com"
+              href="mailto:samuel.j.heal@gmail.com"
               className="flex items-center gap-2 hover:underline underline-offset-4"
               aria-label="Email me"
             >
-              <FiMail /> contact@letsquant.com
+              <FiMail /> samuel.j.heal@gmail.com
             </a>
 
             <a
-              href="https://buymeacoffee.com/username"
+              href="https://buymeacoffee.com/samuelheal"
               target="_blank"
               rel="noopener noreferrer"
               className="brutalist-button flex items-center gap-2"

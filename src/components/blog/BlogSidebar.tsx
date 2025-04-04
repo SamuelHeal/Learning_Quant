@@ -1,24 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FiSearch, FiFilter, FiChevronRight } from "react-icons/fi";
-import { BlogPost } from "@/types";
+import {
+  FiSearch,
+  FiFilter,
+  FiChevronRight,
+  FiBook,
+  FiFileText,
+} from "react-icons/fi";
+import { BlogPost, Subject } from "@/types";
 
 interface BlogSidebarProps {
   posts: BlogPost[];
+  subjects: Subject[];
   category: string;
   currentSlug?: string;
+  currentSubjectSlug?: string;
 }
 
 export default function BlogSidebar({
   posts,
+  subjects,
   category,
   currentSlug,
+  currentSubjectSlug,
 }: BlogSidebarProps) {
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
+  const [expandedSubjects, setExpandedSubjects] = useState<string[]>([]);
+
+  // Initialize expanded subjects based on current subject/post
+  useEffect(() => {
+    if (currentSubjectSlug && !expandedSubjects.includes(currentSubjectSlug)) {
+      setExpandedSubjects((prev) => [...prev, currentSubjectSlug]);
+    } else if (currentSlug && !currentSubjectSlug) {
+      // If we only have a post slug but no subject slug, find the subject for this post
+      const post = posts.find((p) => p.slug === currentSlug);
+      if (post) {
+        const subject = subjects.find((s) => s.id === post.subject_id);
+        if (subject && !expandedSubjects.includes(subject.slug)) {
+          setExpandedSubjects((prev) => [...prev, subject.slug]);
+        }
+      }
+    }
+  }, [currentSubjectSlug, currentSlug, subjects, posts, expandedSubjects]);
 
   // Get unique tags from all posts
   const allTags = Array.from(new Set(posts.flatMap((post) => post.tags || [])));
@@ -36,9 +63,31 @@ export default function BlogSidebar({
     return matchesSearch && matchesTags;
   });
 
+  // Filter subjects based on whether they have any matching posts
+  const filteredSubjects = subjects.filter((subject) =>
+    filteredPosts.some((post) => post.subject_id === subject.id)
+  );
+
+  // Group posts by subject
+  const postsBySubject: Record<string, BlogPost[]> = {};
+  filteredPosts.forEach((post) => {
+    if (!postsBySubject[post.subject_id]) {
+      postsBySubject[post.subject_id] = [];
+    }
+    postsBySubject[post.subject_id].push(post);
+  });
+
   const toggleTag = (tag: string) => {
     setTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const toggleSubject = (subjectSlug: string) => {
+    setExpandedSubjects((prev) =>
+      prev.includes(subjectSlug)
+        ? prev.filter((s) => s !== subjectSlug)
+        : [...prev, subjectSlug]
     );
   };
 
@@ -92,30 +141,57 @@ export default function BlogSidebar({
         </div>
       )}
 
-      {/* Post list */}
-      <h3 className="text-xl font-bold mb-4">
-        {category.charAt(0).toUpperCase() + category.slice(1)} Posts
+      {/* Subject and Post list */}
+      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+        <FiBook /> {category.charAt(0).toUpperCase() + category.slice(1)}{" "}
+        Subjects
       </h3>
 
-      {filteredPosts.length > 0 ? (
-        <ul className="space-y-3">
-          {filteredPosts.map((post) => (
-            <li key={post.id}>
-              <Link
-                href={`/${category}/${post.slug}`}
-                className={`block p-2 border-l-3 hover:translate-x-1 transition-transform ${
-                  currentSlug === post.slug
-                    ? "border-foreground font-bold"
-                    : "border-transparent"
-                }`}
-              >
-                {post.title}
-              </Link>
-            </li>
-          ))}
+      {filteredSubjects.length > 0 ? (
+        <ul className="space-y-4">
+          {filteredSubjects.map((subject) => {
+            const subjectPosts = postsBySubject[subject.id] || [];
+            const isExpanded = expandedSubjects.includes(subject.slug);
+
+            return (
+              <li key={subject.id} className="brutalist-border p-2">
+                <button
+                  onClick={() => toggleSubject(subject.slug)}
+                  className="flex items-center justify-between w-full font-semibold p-1"
+                >
+                  <span>{subject.title}</span>
+                  <FiChevronRight
+                    className={`transition-transform ${
+                      isExpanded ? "rotate-90" : ""
+                    }`}
+                  />
+                </button>
+
+                {isExpanded && subjectPosts.length > 0 && (
+                  <ul className="mt-2 pl-2 space-y-1 border-l-2 border-muted">
+                    {subjectPosts.map((post) => (
+                      <li key={post.id}>
+                        <Link
+                          href={`/${category}/subjects/${subject.slug}/lessons/${post.slug}`}
+                          className={`block p-2 hover:translate-x-1 transition-transform flex items-center gap-1 ${
+                            currentSlug === post.slug
+                              ? "font-bold bg-accent/10"
+                              : ""
+                          }`}
+                        >
+                          <FiFileText size={14} />
+                          <span>{post.title}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       ) : (
-        <p className="text-center py-4">No posts found</p>
+        <p className="text-center py-4">No subjects or posts found</p>
       )}
     </div>
   );

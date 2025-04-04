@@ -160,7 +160,12 @@ export default function NotesSidebar({ postSlug }: { postSlug: string }) {
                   <div className="flex justify-end gap-2">
                     <button
                       type="button"
-                      onClick={handleCancelNote}
+                      onClick={() => {
+                        // Call handleCancelNote first which will trigger resetHighlight event
+                        handleCancelNote();
+                        // Then clear the note text input
+                        setNoteText("");
+                      }}
                       className="px-3 py-1 border-2 border-foreground rounded-md hover:bg-accent/10"
                     >
                       Cancel

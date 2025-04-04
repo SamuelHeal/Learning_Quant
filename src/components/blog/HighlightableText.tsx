@@ -38,6 +38,7 @@ export default function HighlightableText({
     openNoteById,
     setSidebarOpen,
     isAddingNote,
+    sidebarOpen,
   } = useNotes();
 
   // Filter notes for the current post
@@ -210,8 +211,10 @@ export default function HighlightableText({
 
   // Handle clicks outside the selection and tooltip
   const handleDocumentClick = (event: MouseEvent) => {
-    // Only handle clicks if we're not in the process of adding a note
-    if (!isAddingNote) {
+    // Only clear the highlight when:
+    // 1. We're not in the process of adding a note OR
+    // 2. The sidebar is closed (indicating user abandoned adding a note)
+    if (!isAddingNote || !sidebarOpen) {
       if (
         contentRef.current &&
         !contentRef.current.contains(event.target as Node) &&
@@ -224,6 +227,11 @@ export default function HighlightableText({
           setShowTooltip(false);
           setHighlightedContent(content); // Reset highlight
           setSelectedText(""); // Clear selected text
+
+          // Only reset isAddingNote if the sidebar is closed
+          if (isAddingNote && !sidebarOpen) {
+            setIsAddingNote(false);
+          }
         }, 100);
       }
     }
@@ -335,9 +343,24 @@ export default function HighlightableText({
 
   // Add tooltip click handler
   const handleAddNote = () => {
+    // Save the selection details
+    const tempSelectedText = selectedText;
+    const tempContextBefore =
+      localStorage.getItem("currentContextBefore") || "";
+    const tempContextAfter = localStorage.getItem("currentContextAfter") || "";
+
+    // Do NOT reset the visual highlight when adding a note
+    // We want to keep the highlight visible while adding the note
+
+    // Set adding state and open sidebar
     setIsAddingNote(true);
-    setSidebarOpen(true); // Open the sidebar
+    setSidebarOpen(true);
     setShowTooltip(false);
+
+    // Make sure the selection data is preserved
+    setSelectedText(tempSelectedText);
+    localStorage.setItem("currentContextBefore", tempContextBefore);
+    localStorage.setItem("currentContextAfter", tempContextAfter);
   };
 
   // Handle canceling note creation
@@ -354,7 +377,7 @@ export default function HighlightableText({
     return () => {
       document.removeEventListener("mousedown", handleDocumentClick);
     };
-  }, [isTooltipHovered]);
+  }, [isTooltipHovered, isAddingNote, sidebarOpen, content]);
 
   // Set up handler for clicking on highlights using event delegation
   useEffect(() => {
@@ -409,6 +432,26 @@ export default function HighlightableText({
       window.openNoteById = () => {};
     };
   }, [openNoteById]);
+
+  // Listen for custom reset highlight event
+  useEffect(() => {
+    const handleResetHighlight = () => {
+      setShowTooltip(false);
+      setHighlightedContent(content); // Reset highlight
+      setSelectedText(""); // Clear selected text
+    };
+
+    document.addEventListener("resetHighlight", handleResetHighlight);
+
+    return () => {
+      document.removeEventListener("resetHighlight", handleResetHighlight);
+    };
+  }, [content]);
+
+  // Update highlighted content when content prop changes
+  useEffect(() => {
+    setHighlightedContent(content);
+  }, [content]);
 
   // Prepare the highlighted HTML
   const finalHtml = applyHighlights(highlightedContent, postNotes);

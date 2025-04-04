@@ -4,11 +4,23 @@ export enum BlogCategory {
   MATHEMATICS = "mathematics",
 }
 
+export interface Subject {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  category: BlogCategory;
+  createdAt: string;
+  updatedAt: string;
+  order?: number;
+}
+
 export interface BlogPost {
   id: string;
   title: string;
   slug: string;
   description: string;
+  subject_id: string;
   category: BlogCategory;
   tags: string[];
   content: BlogContent[];

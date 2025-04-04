@@ -14,6 +14,7 @@ import {
   FiType,
   FiImage,
   FiCode,
+  FiBook,
 } from "react-icons/fi";
 import {
   BlogPost,
@@ -23,8 +24,9 @@ import {
   TextContent,
   ImageContent,
   CodeContent,
+  Subject,
 } from "@/types";
-import { saveBlogPost } from "@/lib/supabase";
+import { saveBlogPost, getSubjects } from "@/lib/supabase";
 import TextEditor from "./TextEditor";
 import ImageEditor from "./ImageEditor";
 import CodeEditor from "./CodeEditor";
@@ -40,6 +42,7 @@ const DEFAULT_POST: BlogPost = {
   title: "New Blog Post",
   slug: "new-blog-post",
   description: "Add a description for your blog post here.",
+  subject_id: "", // This will be populated from available subjects
   category: BlogCategory.FINANCE,
   tags: [],
   content: [],
@@ -50,6 +53,9 @@ const DEFAULT_POST: BlogPost = {
 
 export default function EditorPanel({ initialPost, onSave }: EditorPanelProps) {
   const [post, setPost] = useState<BlogPost>(initialPost || DEFAULT_POST);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -59,6 +65,54 @@ export default function EditorPanel({ initialPost, onSave }: EditorPanelProps) {
       setPost(initialPost);
     }
   }, [initialPost]);
+
+  // Fetch all subjects when component mounts
+  useEffect(() => {
+    async function fetchSubjects() {
+      setLoading(true);
+      try {
+        const allSubjects = await getSubjects();
+        setSubjects(allSubjects);
+
+        // Filter subjects based on the current category
+        const filtered = allSubjects.filter(
+          (subject) => subject.category === post.category
+        );
+        setFilteredSubjects(filtered);
+
+        // If we have a new post and there are filtered subjects, set the first one as default
+        if (!initialPost && filtered.length > 0 && !post.subject_id) {
+          setPost((prev) => ({ ...prev, subject_id: filtered[0].id }));
+        }
+      } catch (error) {
+        console.error("Error fetching subjects:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSubjects();
+  }, []);
+
+  // Filter subjects when category changes
+  useEffect(() => {
+    const filtered = subjects.filter(
+      (subject) => subject.category === post.category
+    );
+    setFilteredSubjects(filtered);
+
+    // If the category changed and there are subjects in the new category,
+    // but the current subject is not in this category, update the subject_id
+    if (filtered.length > 0) {
+      const currentSubjectInCategory = filtered.some(
+        (subject) => subject.id === post.subject_id
+      );
+
+      if (!currentSubjectInCategory) {
+        setPost((prev) => ({ ...prev, subject_id: filtered[0].id }));
+      }
+    }
+  }, [post.category, subjects]);
 
   const handleBasicInfoChange = (field: keyof BlogPost, value: any) => {
     setPost((prev) => ({ ...prev, [field]: value }));
@@ -160,6 +214,13 @@ export default function EditorPanel({ initialPost, onSave }: EditorPanelProps) {
     setSuccessMessage("");
     setErrorMessage("");
 
+    // Validate subject selection
+    if (!post.subject_id) {
+      setErrorMessage("Please select a subject for this post.");
+      setSaving(false);
+      return;
+    }
+
     try {
       // Make sure slug is URL friendly
       const safeSlug = post.title
@@ -234,6 +295,58 @@ export default function EditorPanel({ initialPost, onSave }: EditorPanelProps) {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="editor-field">
+            <label className="block mb-2 font-bold">
+              <span className="flex items-center gap-1">
+                <FiBook /> Subject
+              </span>
+            </label>
+            <select
+              value={post.subject_id}
+              onChange={(e) =>
+                handleBasicInfoChange("subject_id", e.target.value)
+              }
+              className="brutalist-border w-full p-3"
+              disabled={loading || filteredSubjects.length === 0}
+            >
+              {loading ? (
+                <option value="">Loading subjects...</option>
+              ) : filteredSubjects.length === 0 ? (
+                <option value="">
+                  No subjects available for this category
+                </option>
+              ) : (
+                <>
+                  <option value="">-- Select a subject --</option>
+                  {filteredSubjects.map((subject) => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.title}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
+            {filteredSubjects.length === 0 && !loading && (
+              <p className="text-sm text-red-500 mt-1">
+                Please create a subject for this category in the Supabase
+                dashboard first.
+              </p>
+            )}
+            {post.subject_id && (
+              <div className="mt-2 p-2 bg-muted rounded text-sm">
+                <p className="mb-1">
+                  <strong>This post belongs to:</strong>{" "}
+                  {filteredSubjects.find((s) => s.id === post.subject_id)
+                    ?.title || "Unknown subject"}
+                </p>
+                <p className="text-muted-foreground">
+                  This post will appear under this subject in the category{" "}
+                  {post.category}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2 editor-field">
